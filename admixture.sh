@@ -5,13 +5,14 @@ prefix=""
 threads=1
 rename=1
 
-while getopts "s:f:o:t:r" flag; do
+while getopts "s:f:o:t:i:r" flag; do
   case "${flag}" in
     s) samples="${OPTARG}" ;; # gzipped vcf file of the cohort samples
     f) founders="${OPTARG}" ;; # gzipped vcf file of just the founders
     o) prefix="${OPTARG}" ;; # output prefix
     t) threads="${OPTARG}" ;; # Threads to use
     r) rename=0 ;; # Don't rename chrs before running admix
+    i) sampmap="${OPTARG}" ;; # Sample map for admixture plot
     *) echo "Invalid option: -${flag}" >&2; exit 1 ;;
   esac
 done
@@ -36,4 +37,4 @@ fi
 admixture ${prefix}_merged_pruned.bed 3 -jX ${threads} > ${prefix}_admix.log
 
 # Plot the proportions using Joanna Meier's R script
-Rscript plotADMIXTURE.R
+plotADMIXTURE.R -p ${prefix}_merged_pruned -i $sampmap -k 2 -m 2 -l DP,SSM,SM,${prefix} -o ${prefix}_admixturePlot

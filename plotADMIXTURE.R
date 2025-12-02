@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript
+#!/usr/bin/env Rscript
 
 # Usage: plotADMIXTURE.r -p <prefix> -i <info file, 2-column file with ind name and population/species name>
 #                        -k <max K value> -l <comma-separated list of populations/species in the order to be plotted>

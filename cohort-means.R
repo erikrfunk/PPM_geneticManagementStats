@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 args <- commandArgs(trailingOnly = TRUE)
 
 segSites = read.table(args[1])

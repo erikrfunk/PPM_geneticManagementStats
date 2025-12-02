@@ -7,11 +7,12 @@ genomeLength=1812862276 # fixed number used to scale the het estimate
 
 mkdir outputs # Will hold the final stats files
 
-while getopts "s:p:g:" flag; do
+while getopts "s:p:g:t" flag; do
   case "${flag}" in
     s) samples="${OPTARG}" ;;
     p) setPrefix="${OPTARG}" ;;
     g) genomeLength="${OPTARG}" ;;
+    t) threads="${OPTARG}" ;;
     *) echo "Invalid option: -${flag}" >&2; exit 1 ;;
   esac
 done
@@ -25,7 +26,7 @@ input=$1 # A vcf.gz file - will be subset if providing a sample list: ~/USS/cons
 if [[ $samples != false ]]; then
   echo "$(date) -- Subsampling the vcf using sample names provided in ${samples}."
   prefix=$(basename $samples .txt)
-  bcftools view -S $samples --force-samples $input | bcftools view -e MAC==0 -Oz -o ${prefix}.vcf.gz
+  bcftools view -S $samples --force-samples --threads ${threads} $input | bcftools view -e MAC==0 -Oz -o ${prefix}.vcf.gz
   #Reset input to the subsampled vcf
   input=${prefix}.vcf.gz
 else
@@ -53,7 +54,7 @@ echo "$(date) -- Results written to: outputs/${prefix}_segregatingSites.txt"
 
 # A single plink command to calculate multiple stats at once
 echo "$(date) -- Running plink to calculate heterozygosity, inbreeding, and relatedness."
-plink --vcf ${input} --allow-extra-chr --het --ibc --make-rel --pca --missing
+plink --vcf ${input} --allow-extra-chr --het --ibc --make-rel --pca --missing --threads ${threads}
 
 #############################
 # Heterozygosity and F
@@ -108,7 +109,7 @@ tabix ${input} # not sure if this speeds up roh or not...
 
 
 bcftools roh -o ${prefix}_roh.txt -H 5e-15 \
---threads 6 --AF-file freqs.tab.gz --exclude 'AF<0.05' --exclude 'AF>0.95' \
+--threads ${threads} --AF-file freqs.tab.gz --exclude 'AF<0.05' --exclude 'AF>0.95' \
 ${input}
 
 # Convert the single output file into a sample table

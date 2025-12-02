@@ -1,14 +1,15 @@
 # PPM_geneticManagementStats
 Scripts for calculating genetic statistics for the PPM managed population. <br>
-1. [All stats](##all-stats)
-2. [Admixture](##admixture)
-3. [Low coverage relatedness](##low-coverage-relatedness)
-4. [Other scripts](##other-scripts)
+1. [All stats](#all-stats)
+2. [Admixture](#admixture)
+3. [Low coverage relatedness](#low-coverage-relatedness)
+4. [Other scripts](#other-scripts)
+
 
 ## All stats
-**Contents and program versions used in the `all-stats.sh` script** <br>
+*Description:*<br>
 This script runs all the stats at once and requires the path to a vcf file.
-Three R scripts are required to be in the same directory as the all-stats.sh script.
+Three R scripts are required to be in the path or working directory.
 These are `cohort-means.R`, `pca-from-plink.R`, and `snpRelate-IBDKING.R`<br><br>
 Optionally, an argument can be added that includes a list of samples.
 The sample file should be a single column ending in `.txt` and will be used to subset the vcf.
@@ -16,7 +17,8 @@ The sample file should be a single column ending in `.txt` and will be used to s
 
 Finally, an alternative prefix can be set. Otherwise, the prefix will be determined from either the sample list, or if not subsetting, the vcf prefix.
 
-The `all-stats.sh` script creates a new directory `outputs`, where all final output files get placed.
+The `all-stats.sh` script creates a new directory `outputs`, where all final output files get placed. See below for a more detailed
+description of each step included in the script.
 
 *Usage:*
 ```
@@ -24,6 +26,7 @@ all-stats.sh [options] input.vcf.gz
   -s, sample list
   -p, set a new prefix for output
   -g, set a whole genome length to scale heterozygosity
+  -t, threads
 ```
 1. Segregating sites.
 <br>This is calculated as a simple count of the number of variants included in the vcf file.
@@ -65,6 +68,7 @@ Finally, all the individual-level stats (heterozygosity, F stats, and ROHs) will
 
 
 ## Admixture
+*Description:*<br>
 Along with the cohort vcf created by either the `all-stat.sh` script or the `extract-individuals.sh` script,
 use a vcf file of the founder individuals to calculate admixture proportions for the cohort.
 
@@ -73,10 +77,13 @@ use a vcf file of the founder individuals to calculate admixture proportions for
 admixture.sh [options]
   -s, gzipped vcf file of the cohort samples
   -f, gzipped vcf file of the founder samples
+  -i, sample map used to plot admixture proportions
   -o, output prefix
+  -t, threads
+  -r, don't rename chromosomes
 
   Details:
-  Both files should be accessible by bcftools. If a file type error gets
+  Both vcf files should be accessible by bcftools. If a file type error gets
   thrown by bcftools, gunzip the file and pipe it into bcftools view adding the
   -Oz flag to let bcftools do the compression. The script will take care of indexing.
 ```
@@ -86,16 +93,17 @@ plink, a linkage pruning is added. The defaults for this step include <br>
  - Testing snps in a window of 500kb
  - Moving in 10 SNP steps
  - Using an r2 threshold of 0.2
+
+ As of now, these settings are hard coded and would need to be changed by altering
+ the script. I think it makes sense to add these as arguments to allow flexibility
+ and will work on doing that.
+
 Another assumption is about chromosome names. ADMIXTURE won't allow "non-human"
 or non-integer chromosome names. The default in this script is to simply remove
 the text part of the chromosome name using sed. This is specific to the PPM reference
 where chromosomes all begin with "HiC_scaffold_". If a different string is desired
 for replacement, that will need to be manually adjusted. If no chromosome renaming
 is required, add the -r flag with no argument to switch the behavior off.
-
-As of now, these settings are hard coded and would need to be changed by altering
-the script. I think it makes sense to add these as arguments to allow flexibility
-and will work on doing that.
 
 Finally, this script will plot the admixture results in R using a script written
 by Joanna Meier called `plotADMIXTURE.R`. This is a barplot of admixture
@@ -106,7 +114,7 @@ and year for each cohort. An example that uses the current founders (as of Dec 2
 is included in the repository as `admixture-samplemap.txt`. The order needs to be the
 same as the admixture file, and this generally should be the cohort individuals
 followed by the founder individuals, but a post-hoc check can be done by using
-`zgrep "#CHROM"` on the merged.vcf.gz that gets produced by this script. 
+`zgrep "#CHROM"` on the merged.vcf.gz that gets produced by this script.
 
 
 ## Low coverage relatedness
