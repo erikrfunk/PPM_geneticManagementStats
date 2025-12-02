@@ -54,13 +54,11 @@ echo "$(date) -- Results written to: outputs/${prefix}_segregatingSites.txt"
 
 # A single plink command to calculate multiple stats at once
 echo "$(date) -- Running plink to calculate heterozygosity, inbreeding, and relatedness."
-plink --vcf ${input} --allow-extra-chr --het --ibc --make-rel --pca --missing --threads ${threads}
+plink --vcf ${input} --allow-extra-chr --het --ibc --make-rel --pca --missing \
+--out ${prefix} --threads ${threads}
 
 #############################
 # Heterozygosity and F
-mv plink.het ${prefix}.het
-mv plink.ibc ${prefix}.ibc
-
 echo -e "ID\tO(HOM)\tHETrel\tHETwg\tF\tFhat1" > ${prefix}_finalHetTable.txt
 awk -v L=$genomeLength -v S=$segSites 'BEGIN{OFS="\t"} FNR>1{print $1"_"$2,$3,($5-$3)/$5,($5-$3)/(L*($5/S)),$6}' ${prefix}.het > ${prefix}.ObsHet
 paste ${prefix}.ObsHet <(tail -n +2 ${prefix}.ibc | cut -f 4) >> ${prefix}_finalHetTable.txt
@@ -70,12 +68,11 @@ echo "$(date) -- Heterozygosity and F written to: outputs/${prefix}_finalHetTabl
 #############################
 # PCA from plink
 # Use the eigenvectors and missingness from plink
-Rscript pca-from-plink.R plink.eigenvec plink.imiss outputs/${prefix}
+pca-from-plink.R ${prefix}.eigenvec ${prefix}.imiss outputs/${prefix}
 
 #############################
 # Relatedness Matrix
 # Awk command converts the lower triangle matrix into a pairwise list
-mv plink.rel ${prefix}.rel
 
 echo -e "ID1\tID2\tREL" >> ${prefix}_relatednessList.txt
 awk 'NR==FNR{
@@ -96,7 +93,7 @@ echo "$(date) -- Relatedness written to: outputs/${prefix}_relatednessList.txt"
 
 # It seems that snpRelate's IBDKING is more in line with expections given
 # the pedigree relationships. So run that stat here using the accessory R script
-Rscript snpRelate-IBDKING.R ${input} outputs/${prefix}
+snpRelate-IBDKING.R ${input} outputs/${prefix}
 
 #############################
 # CalculateROH in bcftools
@@ -138,4 +135,9 @@ awk 'BEGIN{OFS="\t"} NR==FNR{a[$1]=$0;next} {print a[$1],$2,$3,$4,$5}' \
 outputs/${prefix}_finalHetTable.txt outputs/${prefix}_individualRohs.txt > outputs/${prefix}_allIndStats.txt
 
 echo "$(date) -- and outputing cohort averages to: outputs/meanCohortStats.txt"
-Rscript cohort-means.R outputs/${prefix}_segregatingSites.txt outputs/${prefix}_allIndStats.txt ${prefix}
+cohort-means.R outputs/${prefix}_segregatingSites.txt outputs/${prefix}_allIndStats.txt ${prefix}
+
+
+# Clean up the directory by moving all the plink files to output directory
+mv ${prefix}* outputs/
+mv freqs* outputs/
