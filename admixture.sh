@@ -6,7 +6,7 @@ threads=1
 rename=1
 prune=0
 
-while getopts "s:f:o:t:i:r" flag; do
+while getopts "s:f:o:t:i:rp" flag; do
   case "${flag}" in
     s) samples="${OPTARG}" ;; # gzipped vcf file of the cohort samples
     f) founders="${OPTARG}" ;; # gzipped vcf file of just the founders
