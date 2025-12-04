@@ -7,7 +7,7 @@ indStats = read.table(args[2],header=T)
 cohortName = args[3]
 
 cohortMeans = data.frame("Cohort"=cohortName)
-indMeans = as.data.frame(t(colMeans(indStats[,2:9])))
+indMeans = as.data.frame(t(colMeans(indStats[,2:ncol(indStats)])))
 cohortMeans = cbind(cohortMeans,indMeans)
 cohortMeans$SegregatingSites = as.numeric(segSites$V1)
 
