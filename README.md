@@ -93,7 +93,7 @@ admixture.sh [options]
 ```
 
 *Description:*<br>
-Purpose: Calculate and plot admixture proportions of a cohort relative to the founders.
+Purpose: Calculate and plot admixture proportions of a cohort relative to the founders. <br>
 Requires: **ADMIXTURE v1.3.0**, **Plink v1.9**, and **BCFtools**<br>
 
 Along with the cohort vcf created by either the `all-stat.sh` script or the `extract-individuals.sh` script,
