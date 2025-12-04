@@ -10,6 +10,8 @@ Scripts for calculating genetic statistics for the PPM managed population. <br>
 *Usage:*
 ```
 all-stats.sh [options] input.vcf.gz
+
+  [optional arguments]
   -s, sample list
   -p, set a new prefix for output
   -g, set a whole genome length to scale heterozygosity
@@ -32,25 +34,23 @@ Finally, an alternative prefix can be set. Otherwise, the prefix will be determi
 The `all-stats.sh` script creates a new directory `outputs`, where all final output files get placed. See below for a more detailed
 description of each step included in the script.
 
-1. Segregating sites.
-<br>
+1. Segregating sites<br>
 This is calculated as a simple count of the number of variants included in the vcf file.
 This assumes the INFO/AC tag is correct in the vcf file.
 If the file was subset using a sample list as part of this script, the INFO/AC tag
 should have been updated.
 This count requires only a single minor allele to be present for a given site to be counted
-and is output with the suffix `_segregatingSites.txt`.<br>
-- If a stricter filter is preferred, substitute an MAF expression for the MAC expression with your desired minor allele frequency cutoff. For example, a 5% cutoff:<br>
+and is output with the suffix `_segregatingSites.txt`
+- If a stricter filter is preferred, substitute an MAF expression for the MAC expression with your desired minor allele frequency cutoff when subsetting. For example, a 5% cutoff:<br>
 `bcftools view -e MAF<0.05 input.vcf.gz | grep -v "#" | wc -l `
 
-2. Heterozygosity and Inbreeding coefficients: **plink v1.90b4**
-<br>
-Output is a text file with the suffix `_finalHetTable.txt`.
+2. Heterozygosity and Inbreeding coefficients: **plink v1.90b4** <br>
+Output is a text file with the suffix `_finalHetTable.txt`
 <br>
 Columns are:
 - sample name
 - observed homozygous sites
-- heterozygous sites as total called sites minus observed homozygous sites divided by the hard coded genome length.
+- heterozygous sites as total called sites minus observed homozygous sites divided by the genome length.
 - F as calculated by plink with the `-het` flag
 - Fhat1 as calculated by plink with the `-ibc` flag
 
@@ -61,16 +61,15 @@ Columns are:
 - A second PCA is generated that has points labeled with their ID.
 - The second PCA uses the suffix `_PCA_labels.pdf`.
 
-4. Relatedness matrix: **plink v1.90b4** and R package **snpRelate vXX**
+4. Relatedness matrix: **plink v1.90b4** and R package **snpRelate v1.32.2**
 - Output is a text file with the suffix `_relatednessList.txt`.
 - This includes pairwise relatedness coefficients from the `--make-rel` flag.
 <br> **This should be validated against known relatives first!*
-<br> **The value from snpRelate's IBDKing calculation seems to be more reliable and likely the better result to use.*
+<br> **The values from snpRelate's IBDKing calculation seems to be more reliable and likely the better result to use.*
 
 5. Runs of homozygosity: **BCFtools v1.9**
 - Output is a text file with the suffix `_individualsRohs.txt`.
-- This includes for the total tally of roh for 1 and 5MB regions, as well as the froh using the hard coded genome length.
-<br> **Note that this makes a potentially large intermediate file. Likely over 1GB per 5 individuals.*
+- This includes the total tally of roh for 1 and 5MB regions, as well as Froh using the set genome length.
 
 Finally, all the individual-level stats (heterozygosity, F stats, and ROHs) will be merged into a file with the suffix `_allIndStats.txt` and the cohort mean of each statistic into `meanCohortStats.txt`. Note that while all other output files include the cohort prefix in the file name, the cohort means file does not. Instead, each iteration will append the means the to the end of this file so that multiple cohorts can be run within a loop and the file will accumulate the mean stats for each cohort, adding the name of the cohort into the first column.
 
@@ -82,10 +81,12 @@ admixture.sh [options]
   -s, gzipped vcf file of the cohort samples
   -f, gzipped vcf file of the founder samples
   -i, sample map used to plot admixture proportions
+
+  [optional arguments]
   -o, output prefix
   -t, threads
-  -r, don't rename chromosomes
-  -p, prune for linkage using plink
+  -r, don't rename chromosomes (no argument)
+  -p, prune for linkage using plink (no argument)
 
   Details:
   Both vcf files should be accessible by bcftools. If a file type error gets
@@ -94,6 +95,9 @@ admixture.sh [options]
 ```
 
 *Description:*<br>
+Purpose: Calculate and plot admixture proportions of a cohort relative to the founders.
+Requires: **ADMIXTURE v1.3.0**, **Plink v1.9**, and **BCFtools**<br>
+
 Along with the cohort vcf created by either the `all-stat.sh` script or the `extract-individuals.sh` script,
 use a vcf file of the founder individuals to calculate admixture proportions for the cohort.
 
@@ -133,6 +137,8 @@ working or not desired let me know.
 low-coverage-relatedness.sh [options] input_bamlist.txt
   -g, genotype likelihoods VCF file
   -s, sample list
+
+  [optional arguments]
   -o, output prefix
   -t, threads
 
@@ -145,7 +151,7 @@ low-coverage-relatedness.sh [options] input_bamlist.txt
 
 *Description:*<br>  
 Purpose: To test an individual that might have lost it's p-chip.<br>
-Requires: **ANGSD** and **ngsRelate**<br>
+Requires: **ANGSD**, **BCFtools**, and **ngsRelate**<br>
 
 When analyzing the reintroduced populations, we are still limited to low coverage
 data until imputation can be optimized. The script here will run **ngsRelate** on low
