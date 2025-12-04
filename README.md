@@ -45,17 +45,15 @@ and is output with the suffix `_segregatingSites.txt`
 `bcftools view -e MAF<0.05 input.vcf.gz | grep -v "#" | wc -l `
 
 2. Heterozygosity and Inbreeding coefficients: **plink v1.90b4** <br>
-Output is a text file with the suffix `_finalHetTable.txt`
-<br>
-Columns are:
+Output is a text file with the suffix `_finalHetTable.txt` <br>
+Columns are: <br>
 - sample name
 - observed homozygous sites
 - heterozygous sites as total called sites minus observed homozygous sites divided by the genome length.
-- F as calculated by plink with the `-het` flag
-- Fhat1 as calculated by plink with the `-ibc` flag
+- F as calculated by plink with the `het` flag
+- Fhat1 as calculated by plink with the `ibc` flag
 
-3. Principal Component Analysis: **plink v1.90b4** and R package **ggplot2**
-<br>
+3. Principal Component Analysis: **plink v1.90b4** and R package **ggplot2** <br>
 - Output is a PCA with the suffix `_PCA.pdf`
 - The plot uses missingness to color individuals.
 - A second PCA is generated that has points labeled with their ID.
