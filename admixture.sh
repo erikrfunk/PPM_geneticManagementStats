@@ -33,16 +33,16 @@ bcftools annotate --set-id +'%CHROM\_%POS' -Oz -o ${prefix}_merged.vcf.gz
 if [ $prune -eq 1 ]; then
   echo "$(date) -- Pruning sites for linkage."
   plink --vcf ${prefix}_merged.vcf.gz --allow-extra-chr \
-  --indep-pairwise 50 5 0.2 --threads ${threads} --out ${prefix}_merged_pruned
+  --indep-pairwise 50 5 0.2 --threads ${threads} --out ${prefix}_merged
 
   echo "$(date) -- Making plink files."
-  plink --vcf ${prefix}_merged.vcf.gz --make-bed \
-  --extract ${prefix}_merged_pruned.pruned.in --threads ${threads} \
+  plink --vcf ${prefix}_merged.vcf.gz --make-bed --allow-extra-chr \
+  --extract ${prefix}_merged.prune.in --threads ${threads} \
   --out ${prefix}_merged
 else
 # Use plink to make a bed file if not pruning
   echo "$(date) -- Making plink files."
-  plink --vcf ${prefix}_merged.vcf.gz --make-bed \
+  plink --vcf ${prefix}_merged.vcf.gz --make-bed --allow-extra-chr \
   --threads ${threads} --out ${prefix}_merged
 fi
 
@@ -60,8 +60,10 @@ admixture ${prefix}_merged.bed 3 -j${threads} > ${prefix}_admix.log
 # First order the sample map to match plink's .fam file. Then plot
 echo "$(date) -- Sorting the map file."
 awk 'NR==FNR{a[$1]=$0;next} {print a[$1"_"$2]}' ${sampmap} <(cut -f1-2 -d" " ${prefix}_merged.fam) > tmp_map.txt
+pops=$(cut -f2 tmp_map.txt | sort -u | grep -v -e "DP" -e "SM" -e "CB" | tr "\n" "," | sed 's/,$//g')
+founder_pops=$(cut -f2 tmp_map.txt | sort -ru | grep -e "DP" -e "SM" -e "CB" | tr "\n" "," | sed 's/,$//g')
 echo "$(date) -- Plotting admixture proportions."
-plotADMIXTURE.R -p ${prefix}_merged_plink -i tmp_map.txt -k 3 -m 3 -l DP,SSM,SM,${prefix} -o ${prefix}_admixturePlot
+plotADMIXTURE.R -p ${prefix}_merged -i tmp_map.txt -k 3 -m 3 -l ${founder_pops},${pops} -o ${prefix}_admixturePlot
 
 # Clean up
 rm tmp_map.txt
