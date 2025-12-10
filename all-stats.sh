@@ -135,7 +135,7 @@ echo "$(date) -- Merging all individual statistics into: outputs/${prefix}_allIn
 awk 'BEGIN{OFS="\t"} NR==FNR{a[$1]=$0;next} {print a[$1],$2,$3,$4,$5}' \
 outputs/${prefix}_finalHetTable.txt outputs/${prefix}_individualRohs.txt > outputs/${prefix}_allIndStats.txt
 awk 'NR==FNR{a[$1"_"$2]=$6;next} FNR==1 {print $0"\tF_MISS"} FNR>1 {print $0"\t"a[$1]}' \
-outputs/${prefix}.imiss outputs/${prefix}_allIndStats.txt > tmp && mv tmp outputs/${prefix}_allIndStats.txt
+${prefix}.imiss outputs/${prefix}_allIndStats.txt > tmp && mv tmp outputs/${prefix}_allIndStats.txt
 
 echo "$(date) -- and outputing cohort averages to: outputs/meanCohortStats.txt"
 cohort-means.R outputs/${prefix}_segregatingSites.txt outputs/${prefix}_allIndStats.txt ${prefix}
