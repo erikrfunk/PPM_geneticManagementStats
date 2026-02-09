@@ -2,6 +2,7 @@
 
 # defaults
 prefix=""
+founders="false"
 threads=1
 rename=1
 prune=0
@@ -9,7 +10,7 @@ prune=0
 while getopts "s:f:o:t:i:rp" flag; do
   case "${flag}" in
     s) samples="${OPTARG}" ;; # gzipped vcf file of the cohort samples
-    f) founders="${OPTARG}" ;; # gzipped vcf file of just the founders
+    f) founders="${OPTARG}" ;; # gzipped vcf file of just the founders (optional)
     o) prefix="${OPTARG}" ;; # output prefix
     t) threads="${OPTARG}" ;; # Threads to use
     i) sampmap="${OPTARG}" ;; # Sample map for admixture plot
@@ -19,16 +20,23 @@ while getopts "s:f:o:t:i:rp" flag; do
   esac
 done
 
-# Get the list of sites used for the cohort samples and merge it with the
-# Founders to polarize the three source populations
-zgrep -v "#" $samples | cut -f 1-2 > sites_list.txt
-tabix $samples
-tabix $founders
-bcftools filter -R sites_list.txt -Oz -o ${founders}_filtered.vcf.gz $founders
-tabix ${founders}_filtered.vcf.gz
-echo "$(date) -- Merging the founders with the cohort."
-bcftools merge --threads ${threads} $samples ${founders}_filtered.vcf.gz | \
-bcftools annotate --set-id +'%CHROM\_%POS' -Oz -o ${prefix}_merged.vcf.gz
+if [[ $founders != false ]]; then
+  # Get the list of sites used for the cohort samples and merge it with the
+  # Founders to polarize the three source populations
+  zgrep -v "#" $samples | cut -f 1-2 > sites_list.txt
+  tabix $samples
+  tabix $founders
+  bcftools filter -R sites_list.txt -Oz -o ${founders}_filtered.vcf.gz $founders
+  tabix ${founders}_filtered.vcf.gz
+  echo "$(date) -- Merging the founders with the cohort."
+  bcftools merge --threads ${threads} $samples ${founders}_filtered.vcf.gz | \
+  bcftools annotate --set-id +'%CHROM\_%POS' -Oz -o ${prefix}_merged.vcf.gz \
+  --threads $threads
+else
+  echo "$(date) -- Separate founder file not provided. Proceeding with single vcf."
+  bcftools annotate --set-id +'%CHROM\_%POS' -Oz -o ${prefix}_merged.vcf.gz \
+  --threads $threads $samples
+fi
 
 if [ $prune -eq 1 ]; then
   echo "$(date) -- Pruning sites for linkage."
