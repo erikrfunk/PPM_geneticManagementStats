@@ -66,14 +66,9 @@ echo "$(date) -- Running admixture."
 admixture ${prefix}_admix.bed 3 -j${threads} > ${prefix}_admix.log
 
 # Plot the proportions using Joanna Meier's R script
-# First order the sample map to match plink's .fam file. Then plot
-echo "$(date) -- Sorting the map file."
-awk 'NR==FNR{a[$1]=$0;next} {print a[$1"_"$2]}' ${sampmap} <(cut -f1-2 -d" " ${prefix}_admix.fam) > tmp_map.txt
-pops=$(cut -f2 tmp_map.txt | sort -u | grep -v -e "DP" -e "SM" -e "CB" | tr "\n" "," | sed 's/,$//g')
-founder_pops=$(cut -f2 tmp_map.txt | sort -ru | grep -e "DP" -e "SM" -e "CB" | tr "\n" "," | sed 's/,$//g')
+pops=$(cut -f2 map.txt | sort -u | tr "\n" "," | sed 's/,$//g')
 echo "$(date) -- Plotting admixture proportions."
-plotADMIXTURE.R -p ${prefix}_admix -i tmp_map.txt -k 3 -m 3 -l ${founder_pops},${pops} -o ${prefix}_admixturePlot
+plotADMIXTURE.R -p ${prefix}_admix -i ${sampmap} -k 3 -m 3 -l ${pops} -o ${prefix}_admixturePlot
 
 # Clean up
 rm tmp_map.txt
-mv ${prefix}_admix* outputs/
