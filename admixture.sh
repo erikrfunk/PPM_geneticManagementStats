@@ -30,39 +30,40 @@ if [[ $founders != false ]]; then
   tabix ${founders}_filtered.vcf.gz
   echo "$(date) -- Merging the founders with the cohort."
   bcftools merge --threads ${threads} $samples ${founders}_filtered.vcf.gz | \
-  bcftools annotate --set-id +'%CHROM\_%POS' -Oz -o ${prefix}_merged.vcf.gz \
+  bcftools annotate --set-id +'%CHROM\_%POS' -Oz -o ${prefix}_admix.vcf.gz \
   --threads $threads
 else
   echo "$(date) -- Separate founder file not provided. Proceeding with single vcf."
-  bcftools annotate --set-id +'%CHROM\_%POS' -Oz -o ${prefix}_merged.vcf.gz \
+  bcftools annotate --set-id +'%CHROM\_%POS' -Oz -o ${prefix}_admix.vcf.gz \
   --threads $threads $samples
 fi
 
 if [ $prune -eq 1 ]; then
   echo "$(date) -- Pruning sites for linkage."
-  plink --vcf ${prefix}_merged.vcf.gz --allow-extra-chr \
-  --indep-pairwise 50 5 0.2 --threads ${threads} --out ${prefix}_merged
+  plink --vcf ${prefix}_admix.vcf.gz --allow-extra-chr \
+  --indep-pairwise 50 5 0.2 --threads ${threads} --out ${prefix}_admix
 
   echo "$(date) -- Making plink files."
-  plink --vcf ${prefix}_merged.vcf.gz --make-bed --allow-extra-chr \
-  --extract ${prefix}_merged.prune.in --threads ${threads} \
-  --out ${prefix}_merged
+  plink --vcf ${prefix}_admix.vcf.gz --make-bed --allow-extra-chr \
+  --extract ${prefix}_admix.prune.in --threads ${threads} \
+  --out ${prefix}_admix
 else
 # Use plink to make a bed file if not pruning
   echo "$(date) -- Making plink files."
-  plink --vcf ${prefix}_merged.vcf.gz --make-bed --allow-extra-chr \
-  --threads ${threads} --out ${prefix}_merged
+  plink --vcf ${prefix}_admix.vcf.gz --make-bed --allow-extra-chr \
+  --threads ${threads} --out ${prefix}_admix
 fi
+mv ${prefix}_admix.log ${prefix}_admix_plink.log
 
 # ADMIXTURE requires integer chromosome codes, so replace the character prefix
 # in the .bim file
 if [ $rename -eq 1 ]; then
   echo "$(date) -- Renaming chromosomes."
-  sed -i 's/HiC_scaffold_//g' ${prefix}_merged.bim
+  sed -i 's/HiC_scaffold_//g' ${prefix}_admix.bim
 fi
 
 echo "$(date) -- Running admixture."
-admixture ${prefix}_merged.bed 3 -j${threads} > ${prefix}_admix.log
+admixture ${prefix}_admix.bed 3 -j${threads} > ${prefix}_admix.log
 
 # Plot the proportions using Joanna Meier's R script
 # First order the sample map to match plink's .fam file. Then plot
@@ -71,7 +72,7 @@ awk 'NR==FNR{a[$1]=$0;next} {print a[$1"_"$2]}' ${sampmap} <(cut -f1-2 -d" " ${p
 pops=$(cut -f2 tmp_map.txt | sort -u | grep -v -e "DP" -e "SM" -e "CB" | tr "\n" "," | sed 's/,$//g')
 founder_pops=$(cut -f2 tmp_map.txt | sort -ru | grep -e "DP" -e "SM" -e "CB" | tr "\n" "," | sed 's/,$//g')
 echo "$(date) -- Plotting admixture proportions."
-plotADMIXTURE.R -p ${prefix}_merged -i tmp_map.txt -k 3 -m 3 -l ${founder_pops},${pops} -o ${prefix}_admixturePlot
+plotADMIXTURE.R -p ${prefix}_admix -i tmp_map.txt -k 3 -m 3 -l ${founder_pops},${pops} -o ${prefix}_admixturePlot
 
 # Clean up
 rm tmp_map.txt
